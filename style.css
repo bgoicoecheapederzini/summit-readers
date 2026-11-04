@@ -54,8 +54,9 @@ nav.tabs button[aria-selected="true"] { background: var(--violet); color: #fff }
 .count { position: absolute; margin-left: 30px; margin-top: -3px; min-width: 1.5em; padding-inline: 5px; border-radius: 10px; background: var(--pink); color: #fff; font-size: .78rem; text-align: center }
 
 /* Map */
-.map-box { overflow-x: auto; border-radius: 24px; box-shadow: var(--shadow); background: #bfe8ff }
-.map-box svg { display: block; width: 100%; min-width: 520px; max-height: 60svh }
+.map-box { overflow-x: auto; width: 100%; max-width: max(100%, 0px); justify-self: center; border-radius: 24px; box-shadow: var(--shadow); background: #bfe8ff }
+@media (min-width: 560px) { .map-box { max-width: calc(62svh * 1000 / 540) } }
+.map-box svg { display: block; width: 100%; min-width: 520px }
 .banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px }
 .banner b { font: 600 1.3rem var(--display) }
 .stops { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px }

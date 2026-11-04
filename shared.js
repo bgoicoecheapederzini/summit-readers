@@ -172,7 +172,7 @@ function classMapHtml(readers) {
   const groups = STOPS.map(() => []);
   readers.forEach(r => groups[stopIndex(r.points)].push(r));
   const marks = groups.map((g, i) => g.slice(0, 12).map((r, n) => {
-    const row = Math.floor(n / 4), x = STOPS[i].x - 42 + (n % 4) * 28 + (i === 6 ? -90 : 0), y = STOPS[i].y - 48 - row * 28, color = faceColor(r.name);
+    const row = Math.floor(n / 4), x = i === 6 ? STOPS[i].x - 60 - (n % 4) * 28 : STOPS[i].x - 42 + (n % 4) * 28, y = (i === 6 ? STOPS[i].y : STOPS[i].y - 48) - row * 28, color = faceColor(r.name);
     return `<circle cx="${x}" cy="${y}" r="14" fill="${color}" stroke="#fff" stroke-width="2.5"/><text x="${x}" y="${y + 5}" text-anchor="middle" fill="#fff" font-size="13" font-weight="800">${esc(initials(r.name))}</text>`;
   }).join("") + (g.length > 12 ? `<text x="${STOPS[i].x + 74}" y="${STOPS[i].y - 44}" fill="#241a5e" font-size="17" font-weight="800" stroke="#fff" stroke-width="5" paint-order="stroke">+${g.length - 12}</text>` : "")).join("");
   return mapFrame(Math.max(0, ...readers.map(r => r.points)), marks, "Class map. " + STOPS.map((s, i) => s.name + ": " + groups[i].length + " readers").join(", "));
