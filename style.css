@@ -1,0 +1,132 @@
+/* Summit Readers: a bright game level map. One sunny look, chunky outlined cards, finger-sized controls for iPad and Chromebook. */
+:root {
+  --sky: #bde8fa; --ink: #1b2a5b; --muted: #4a5785; --card: #ffffff; --soft: #d8e3ee;
+  --grass: #4cc27a; --hill: #2fa866; --rock: #8f9fc9; --rock-dark: #7485b5; --snow: #ffffff;
+  --sun: #ffc531; --coral: #f2604f; --bad: #b3261e; --good: #17794a; --path: #fff6d6; --locked: #c6cfdf; --note: #fff3c4;
+  --blue: #2f7fe0; --green: #2fa866; --purple: #7b5cfa; --gold: #c98600;
+  --display: "Baloo 2", "Trebuchet MS", sans-serif; --body: "Nunito", "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html { -webkit-text-size-adjust: 100% }
+body { margin: 0; background: var(--sky); color: var(--ink); font: 700 18px/1.45 var(--body) }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 12px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 14px }
+.wrap.narrow { max-width: 620px }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; font-weight: 800 }
+h1 { font-size: 2.1rem } h2 { font-size: 1.5rem } h3 { font-size: 1.25rem }
+p { margin: 0 }
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px }
+.top .who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px }
+.stats { display: flex; flex-wrap: wrap; gap: 6px; font-variant-numeric: tabular-nums }
+.stats span { background: var(--card); border: 2px solid var(--ink); border-radius: 14px; padding: 2px 12px; font-size: .95rem }
+.sheet { background: var(--card); border: 3px solid var(--ink); border-radius: 18px; padding: 16px; display: grid; gap: 12px; min-width: 0; align-content: start }
+.btn { min-height: 48px; padding: 8px 18px; border: 3px solid var(--ink); border-radius: 14px; background: var(--card); color: var(--ink); font: 800 1rem var(--body); cursor: pointer; touch-action: manipulation }
+.btn.primary { background: var(--sun); box-shadow: 0 4px 0 var(--ink) }
+.btn.primary:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink) }
+.btn.big { min-height: 68px; width: 100%; font: 800 1.5rem var(--display) }
+.btn.small { min-height: 44px; padding: 5px 12px; font-size: .95rem }
+.btn.link { border-color: transparent; background: transparent; text-decoration: underline; min-height: 44px; padding: 4px 8px }
+.btn.danger { border-color: var(--bad); color: var(--bad) }
+.btn[disabled] { opacity: .5; cursor: not-allowed }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.muted { color: var(--muted) }
+.meta { color: var(--muted); font-size: .92rem }
+.error { color: var(--bad); font-weight: 800 }
+label { display: grid; gap: 4px; font-weight: 800; min-width: 0 }
+label.check { display: flex; gap: 10px; align-items: center; min-height: 44px }
+label.check input { width: 24px; height: 24px; flex: none; accent-color: var(--hill) }
+input[type=text], input[type=password], input[type=number], select, textarea { width: 100%; min-height: 48px; padding: 8px 12px; border: 2px solid var(--ink); border-radius: 12px; background: var(--card); color: var(--ink); font: 700 1.05rem var(--body) }
+textarea { resize: vertical; min-height: 84px }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px }
+
+/* Map */
+.map-box { overflow-x: auto; border: 3px solid var(--ink); border-radius: 18px; background: var(--sky) }
+.map-box svg { display: block; width: 100%; min-width: 620px; max-height: 58svh }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px }
+.legend > span { display: flex; align-items: center; gap: 6px }
+.token { flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--ink); color: #fff; font: 800 1.1rem var(--display) }
+.mine { background: var(--note); border-radius: 12px; padding: 2px 8px 2px 2px }
+
+/* Sign-in */
+.names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px }
+.dots { display: flex; justify-content: center; gap: 14px; min-height: 28px }
+.dots i { width: 24px; height: 24px; border-radius: 50%; border: 3px solid var(--ink) }
+.dots i.on { background: var(--ink) }
+.pad { display: grid; grid-template-columns: repeat(3, minmax(0, 96px)); justify-content: center; gap: 10px }
+.pad button { min-height: 64px; border: 3px solid var(--ink); border-radius: 16px; background: var(--card); color: var(--ink); font: 800 1.7rem var(--display); cursor: pointer; touch-action: manipulation }
+.pad button:active { background: var(--sun) }
+
+/* Home */
+.you { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; text-align: center }
+.you b { display: block; font: 800 1.9rem/1.1 var(--display); font-variant-numeric: tabular-nums }
+.you small { color: var(--muted); font-size: .9rem }
+.work { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; padding-block: 10px; border-top: 2px solid var(--soft) }
+.work:first-of-type { border-top: 0 }
+.work > div:first-child { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere }
+.pill { display: inline-block; padding: 1px 10px; border-radius: 12px; border: 2px solid currentColor; font-size: .88rem; font-weight: 800; white-space: nowrap }
+.pill.approved { color: var(--good) } .pill.pending { color: var(--muted) } .pill.retry { color: var(--bad) }
+details summary { cursor: pointer; font: 800 1.2rem var(--display); min-height: 36px }
+details[open] summary { margin-bottom: 8px }
+.steps, .bullets { margin: 0; padding-left: 1.4em; display: grid; gap: 6px }
+.table-box { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums }
+th, td { text-align: left; padding: 7px 10px; border-top: 2px solid var(--soft) }
+th { border-top: 0; color: var(--muted); font-size: .9rem }
+td.n, th.n { text-align: right }
+
+/* Timer */
+.timer { justify-items: center; text-align: center }
+.ring { position: relative; width: min(62vw, 46svh, 320px); aspect-ratio: 1 }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg) }
+.ring .time { position: absolute; inset: 0; display: grid; place-items: center; font: 800 clamp(2.6rem, 9svh, 4.2rem) var(--display); font-variant-numeric: tabular-nums }
+
+/* Activity */
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px }
+.choice { display: grid; gap: 2px; text-align: left; padding: 12px 14px; border: 3px solid var(--ink); border-radius: 16px; background: var(--card); color: var(--ink); font: 700 .95rem var(--body); cursor: pointer; min-height: 88px; align-content: start }
+.choice b { font: 800 1.25rem var(--display) }
+.choice[aria-pressed="true"] { background: var(--sun); box-shadow: 0 4px 0 var(--ink) }
+.boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px }
+.box { display: grid; gap: 4px; padding: 10px 12px; border: 4px solid var(--c, var(--ink)); border-radius: 16px; min-width: 0 }
+.box > span:first-child, .box .bt { font: 800 1.3rem/1.1 var(--display); color: var(--c, var(--ink)) }
+.box small { color: var(--muted); font-size: .92rem }
+.box textarea { border-width: 1px }
+.box.wide { grid-column: 1 / -1 }
+.starters { display: flex; flex-wrap: wrap; gap: 6px }
+.done-text { white-space: pre-wrap; overflow-wrap: anywhere; font-weight: 500 }
+
+/* Drawing */
+.draw-wrap { display: grid; gap: 8px; justify-items: center }
+.draw-tools { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center }
+.swatch { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--ink); cursor: pointer; padding: 0 }
+.swatch[aria-pressed="true"], .tool[aria-pressed="true"] { outline: 4px solid var(--coral); outline-offset: 1px }
+.tool { min-width: 44px; min-height: 44px; border: 3px solid var(--ink); border-radius: 12px; background: var(--card); color: var(--ink); font: 800 .9rem var(--body); cursor: pointer; padding: 2px 10px }
+canvas.paper { display: block; width: 100%; max-width: min(100%, calc(62svh * 10 / 7)); aspect-ratio: 10 / 7; border: 3px solid var(--ink); border-radius: 12px; background: #fff; touch-action: none; cursor: crosshair }
+img.art { display: block; width: 100%; max-width: 620px; border: 3px solid var(--ink); border-radius: 12px; background: #fff }
+
+/* Teacher */
+nav.tabs { display: flex; flex-wrap: wrap; gap: 6px }
+nav.tabs button { min-height: 44px; padding: 5px 16px; border: 3px solid var(--ink); border-radius: 14px; background: var(--card); color: var(--ink); font: 800 1rem var(--body); cursor: pointer; box-shadow: 0 3px 0 var(--ink) }
+nav.tabs button[aria-selected="true"] { background: var(--sun); transform: translateY(2px); box-shadow: 0 1px 0 var(--ink) }
+.count { display: inline-block; min-width: 1.5em; margin-left: 5px; padding-inline: 5px; border-radius: 10px; background: var(--coral); color: #fff; font-size: .85rem; text-align: center }
+.teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 14px }
+.team-head { display: flex; align-items: center; gap: 10px }
+.team-head small { display: block; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums }
+ul.plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px }
+.reader { display: flex; justify-content: space-between; gap: 10px; align-items: baseline }
+.reader span:first-child { min-width: 0; overflow-wrap: anywhere }
+.badge { font-size: .85rem; font-weight: 800; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums }
+.question { font: 800 1.7rem/1.25 var(--display); text-wrap: balance }
+.code { font: 800 1.6rem var(--display); letter-spacing: .08em }
+.pin { font-variant-numeric: tabular-nums; letter-spacing: .1em }
+.note { padding: 8px 14px; border: 2px solid var(--ink); border-radius: 12px; background: var(--note) }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px }
+.break { overflow-wrap: anywhere }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: calc(100% - 32px); padding: 10px 18px; border-radius: 16px; background: var(--ink); color: #fff; font-weight: 800; z-index: 5 }
+@media (prefers-reduced-motion: no-preference) {
+  .pop { animation: pop .35s ease-out }
+  @keyframes pop { from { transform: scale(.92) } to { transform: scale(1) } }
+}
