@@ -67,7 +67,7 @@ function render() {
       <div id="p-review" class="stack"></div>
       <div id="p-check" class="stack"></div>
       <div id="p-map" class="stack"></div>
-      <div id="p-class" class="stack"><div class="two"><div class="card"><h2>Add a reader</h2><form id="readerForm" class="row"><label for="rName" style="flex:1 1 200px">First name<input id="rName" type="text" maxlength="30" required autocomplete="off"></label><button class="btn primary" type="submit">Add reader</button></form><p class="meta">Use first names only. If two readers share a name, add an initial.</p></div>
+      <div id="p-class" class="stack"><div class="two"><div class="card"><h2>Add readers</h2><form id="readerForm" style="display:grid;gap:10px"><label for="rName">First names, one on each line<textarea id="rName" rows="4" required autocomplete="off" spellcheck="false"></textarea></label><div class="row"><button class="btn primary" type="submit">Add readers</button></div></form><p class="meta">Type one name or paste your whole list. Use first names only. If two readers share a name, add an initial.</p></div>
         <div class="card"><h2>Add a class</h2><form id="classForm" class="row"><label for="nName" style="flex:1 1 200px">Class name<input id="nName" type="text" maxlength="40" required autocomplete="off"></label><button class="btn primary" type="submit">Add class</button></form><p class="meta">Each class gets its own code and its own readers.</p></div></div><div id="roster" class="stack"></div></div>
       <div id="p-rules" class="stack">${RULES_HTML}</div>`;
     $("out").addEventListener("click", async () => {
@@ -76,7 +76,15 @@ function render() {
     });
     $("readerForm").addEventListener("submit", async ev => {
       ev.preventDefault();
-      if (await act("teacher_student_add", { p_name: $("rName").value })) { $("rName").value = ""; $("rName").focus(); }
+      const names = $("rName").value.split(/[\r\n,;\t]+/).map(n => n.trim()).filter(Boolean);
+      if (!names.length) return;
+      if (names.length > 60) { toast("Add up to 60 names at a time."); return; }
+      if (names.some(n => n.length > 30)) { toast("Each name can have up to 30 characters. Put one name on each line."); return; }
+      try {
+        const r = await rpc("teacher_students_add", { p_token: token, p_names: names });
+        $("rName").value = ""; await refresh();
+        toast(`Added ${r.added} ${r.added === 1 ? "reader" : "readers"}.` + (r.skipped ? ` ${r.skipped} already on the list.` : ""));
+      } catch (e) { handleError(e); }
     });
     $("classForm").addEventListener("submit", async ev => {
       ev.preventDefault();
@@ -159,8 +167,11 @@ function renderRoster() {
       <form id="renameForm" class="row"><label for="cName" style="flex:1 1 220px">Class name<input id="cName" type="text" maxlength="40" value="${esc(keepName == null ? data.class.name : keepName)}" required autocomplete="off"></label><button class="btn" type="submit">Save name</button></form></div>
     <div class="card"><h2>My classes</h2><div class="table-box"><table><tr><th>Class</th><th>Code</th><th class="n">Readers</th><th></th></tr>${data.classes.map(c => `<tr><td>${esc(c.name)}</td><td class="pin">${esc(c.code)}</td><td class="n">${c.students}</td>
       <td class="n"><div class="row" style="justify-content:flex-end;flex-wrap:nowrap">${c.id === data.class.id ? `<span class="pill approved">Open now</span>` : `<button class="btn small" data-act="openclass" data-id="${esc(c.id)}">Open</button>${c.students ? "" : `<button class="btn small danger" data-act="delclass" data-id="${esc(c.id)}">${confirmKey === "c:" + c.id ? "Tap again" : "Remove"}</button>`}`}</div></td></tr>`).join("")}</table></div></div>
-    <div class="card"><h2>My readers</h2><p class="note">Don't project this page. It shows every student's PIN.</p>
+    <div class="card"><div class="row" style="justify-content:space-between"><h2>My readers</h2><button class="btn small primary" data-act="print" ${data.students.length ? "" : "disabled"}>Print PIN cards</button></div><p class="note">Don't project this page. It shows every student's PIN.</p>
       ${rows ? `<div class="table-box"><table><tr><th>Reader</th><th>PIN</th><th class="n">Points</th><th class="n">Minutes</th><th class="n">Readings</th><th class="n">JFK Reads</th><th></th></tr>${rows}</table></div>` : `<p class="muted">No readers yet. Add your first reader above.</p>`}</div>`;
+  $("printArea").innerHTML = data.students.map(s => `<div class="pin-card"><div class="pc-brand">Summit Readers</div><div class="pc-name">${esc(s.name)}</div>
+    <div class="pc-row"><div><small>Class code</small><b>${esc(data.class.code)}</b></div><div><small>My PIN</small><b>${esc(s.pin)}</b></div></div>
+    <div class="pc-class">${esc(data.class.name)}</div><div class="pc-link">${esc(link)}</div></div>`).join("");
   $("renameForm").addEventListener("submit", async ev => {
     ev.preventDefault();
     if (await act("teacher_class_rename", { p_name: $("cName").value })) toast("Class name saved.");
@@ -192,6 +203,7 @@ document.addEventListener("click", async ev => {
   else if (a === "del") { if (twoTap("e:" + id)) await act("teacher_delete_submission", { p_id: id }); }
   else if (a === "delstudent") { if (twoTap("s:" + id)) await act("teacher_student_delete", { p_id: id }); }
   else if (a === "newpin") { if (twoTap("p:" + id)) await act("teacher_student_new_pin", { p_id: id }); }
+  else if (a === "print") window.print();
   else if (a === "openclass") { forgetOpenClass(); await act("teacher_class_switch", { p_id: id }); }
   else if (a === "delclass") { if (twoTap("c:" + id)) await act("teacher_class_delete", { p_id: id }); }
   else if (a === "copy") {
