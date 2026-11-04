@@ -118,6 +118,7 @@ end $$;
 create function public.teacher_class_delete(p_token text, p_id uuid) returns void language plpgsql security definer set search_path = '' as $$
 declare tid uuid := app.teacher_from(p_token); cid uuid := app.class_from(p_token);
 begin
+  if not exists (select 1 from app.class where id = p_id and teacher_id = tid) then raise exception 'not_found'; end if;
   if p_id = cid then raise exception 'class_open'; end if;
   if exists (select 1 from app.student where class_id = p_id) then raise exception 'class_not_empty'; end if;
   delete from app.class where id = p_id and teacher_id = tid;
