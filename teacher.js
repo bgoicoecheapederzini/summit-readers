@@ -67,7 +67,7 @@ function render() {
       <div id="p-review" class="stack"></div>
       <div id="p-check" class="stack"></div>
       <div id="p-map" class="stack"></div>
-      <div id="p-class" class="stack"><div class="two"><div class="card"><h2>Add readers</h2><form id="readerForm" style="display:grid;gap:10px"><label for="rName">First names, one on each line<textarea id="rName" rows="4" required autocomplete="off" spellcheck="false"></textarea></label><div class="row"><button class="btn primary" type="submit">Add readers</button></div></form><p class="meta">Type one name or paste your whole list. Use first names only. If two readers share a name, add an initial.</p></div>
+      <div id="p-class" class="stack"><div class="two"><div class="card"><h2>Add readers to <span id="rTarget"></span></h2><form id="readerForm" style="display:grid;gap:10px"><label for="rName">First names, one on each line<textarea id="rName" rows="4" required autocomplete="off" spellcheck="false"></textarea></label><div class="row"><button class="btn primary" type="submit" id="rSubmit"></button></div></form><p class="meta">Type one name or paste your whole list. Use first names only. If two readers share a name, add an initial.</p></div>
         <div class="card"><h2>Add a class</h2><form id="classForm" class="row"><label for="nName" style="flex:1 1 200px">Class name<input id="nName" type="text" maxlength="40" required autocomplete="off"></label><button class="btn primary" type="submit">Add class</button></form><p class="meta">Each class gets its own code and its own readers.</p></div></div><div id="roster" class="stack"></div></div>
       <div id="p-rules" class="stack">${RULES_HTML}</div>`;
     $("out").addEventListener("click", async () => {
@@ -83,15 +83,17 @@ function render() {
       try {
         const r = await rpc("teacher_students_add", { p_token: token, p_names: names });
         $("rName").value = ""; await refresh();
-        toast(`Added ${r.added} ${r.added === 1 ? "reader" : "readers"}.` + (r.skipped ? ` ${r.skipped} already on the list.` : ""));
+        toast(`Added ${r.added} ${r.added === 1 ? "reader" : "readers"} to ${data.class.name}.` + (r.skipped ? ` ${r.skipped} already on the list.` : ""));
       } catch (e) { handleError(e); }
     });
     $("classForm").addEventListener("submit", async ev => {
       ev.preventDefault();
       forgetOpenClass();
-      if (await act("teacher_class_add", { p_name: $("nName").value })) { $("nName").value = ""; toast("Class added. Now add its readers."); }
+      if (await act("teacher_class_add", { p_name: $("nName").value })) { $("nName").value = ""; $("rName").focus(); toast("Class added. Now add its readers."); }
     });
   }
+  $("rTarget").textContent = data.class.name;
+  $("rSubmit").textContent = "Add to " + data.class.name;
   $("classPick").innerHTML = data.classes.map(c => `<option value="${esc(c.id)}" ${c.id === data.class.id ? "selected" : ""}>${esc(c.name)}${c.pending ? ` (${c.pending} to review)` : ""}</option>`).join("");
   $("stats").innerHTML = `<span><b>${approved.reduce((n, w) => n + w.minutes, 0)}</b> minutes</span><span><b>${approved.length}</b> readings</span><span><b>${approved.filter(w => w.jfk).length}</b> for JFK Reads</span>`;
   $("tabs").innerHTML = TABS.map(([k, label, ic]) => `<button role="tab" aria-selected="${tab === k}" data-tab="${k}">${icon(ic)}<span>${label}</span>${k === "review" && pending ? `<span class="count">${pending}</span>` : ""}</button>`).join("");
