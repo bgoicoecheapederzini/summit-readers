@@ -10,33 +10,37 @@ const QUESTIONS = [
   "Would you tell a friend to read this? Give me two reasons from the reading."
 ];
 const TABS = [["review", "Review", "review"], ["check", "Spot Check", "spot"], ["map", "Map", "map"], ["class", "My Class", "class"], ["rules", "Rules", "rules"]];
-let token = store.get("sr_teacher"), data = null, tab = "review", spot = null, confirmKey = null, openId = null, openWork = null;
+let token = store.get("sr_teacher"), data = null, tab = "review", spot = null, confirmKey = null, openId = null, openWork = null, resetShown = null;
 
 const studentName = id => (data.students.find(s => s.id === id) || {}).name || "Reader";
 const subPoints = submissionPoints;
 
 function showLogin(mode, error) {
-  const setup = mode === "setup";
+  const isNew = mode === "signup", isReset = mode === "reset", isLogin = mode === "login";
+  const title = isNew ? "Create your teacher account" : isReset ? "Choose a new password" : "Teacher sign-in";
   app.innerHTML = `<h1 class="login-title">Summit Readers</h1>
     <form class="card" id="loginForm" style="width:min(100%,520px);justify-self:center">
-      <h2>${setup ? "Create your password" : "Teacher sign-in"}</h2>
-      <label for="lCode">Class code<input id="lCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(store.get("sr_code") || "")}" required></label>
-      ${setup ? `<label for="lSetup">One-time setup code<input id="lSetup" type="text" autocomplete="off" spellcheck="false" required></label>` : ""}
-      <label for="lPass">${setup ? "New password (at least 8 characters)" : "Password"}<input id="lPass" type="password" autocomplete="${setup ? "new-password" : "current-password"}" required></label>
+      <h2>${title}</h2>
+      <label for="lEmail">Email<input id="lEmail" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(store.get("sr_email") || "")}" required></label>
+      ${isReset ? `<label for="lCode">Reset code<input id="lCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" required></label><p class="meta">Ask your Summit Readers coordinator for a reset code.</p>` : ""}
+      <label for="lPass">${isLogin ? "Password" : "New password (at least 8 characters)"}<input id="lPass" type="password" autocomplete="${isLogin ? "current-password" : "new-password"}" required></label>
+      ${isNew ? `<label for="lCode">School code<input id="lCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" required></label><p class="meta">You only need this code the first time. Ask your Summit Readers coordinator.</p>` : ""}
       ${error ? `<p class="error" role="alert">${esc(error)}</p>` : ""}
-      <button class="btn primary" type="submit">${setup ? "Create password and sign in" : "Sign in"}</button>
-      <button class="btn link" type="button" id="swap">${setup ? "I already have a password" : "First time here? Use your setup code"}</button>
+      <button class="btn primary big" type="submit">${isNew ? "Create my account" : isReset ? "Save and sign in" : "Sign in"}</button>
+      ${isLogin ? `<button class="btn link" type="button" data-mode="signup">New teacher? Create your account</button><button class="btn link" type="button" data-mode="reset">Forgot your password?</button>` : `<button class="btn link" type="button" data-mode="login">Back to sign-in</button>`}
     </form>
     <p class="meta" style="color:#fff;text-align:center"><a href="index.html">Student sign-in</a></p>`;
-  $("swap").addEventListener("click", () => showLogin(setup ? "login" : "setup"));
+  app.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { store.set("sr_email", $("lEmail").value.trim()); showLogin(b.dataset.mode); }));
   $("loginForm").addEventListener("submit", async ev => {
     ev.preventDefault();
-    const code = $("lCode").value.trim().toUpperCase();
+    const email = $("lEmail").value.trim().toLowerCase(), pass = $("lPass").value;
+    store.set("sr_email", email);
     try {
-      const r = setup ? await rpc("teacher_setup", { p_code: code, p_setup: $("lSetup").value.trim(), p_password: $("lPass").value })
-        : await rpc("teacher_login", { p_code: code, p_password: $("lPass").value });
-      if (r.error) { showLogin(mode, MESSAGES.bad_login); return; }
-      token = r.token; store.set("sr_teacher", token); store.set("sr_code", code);
+      const r = isNew ? await rpc("teacher_signup", { p_email: email, p_password: pass, p_school_code: $("lCode").value })
+        : isReset ? await rpc("teacher_reset_password", { p_email: email, p_reset_code: $("lCode").value, p_password: pass })
+        : await rpc("teacher_login", { p_email: email, p_password: pass });
+      if (r.error) { showLogin(mode, MESSAGES[r.error] || MESSAGES.bad_login); return; }
+      token = r.token; store.set("sr_teacher", token);
       await refresh();
     } catch (e) { showLogin(mode, friendly(e)); }
   });
@@ -169,6 +173,12 @@ function renderRoster() {
       <form id="renameForm" class="row"><label for="cName" style="flex:1 1 220px">Class name<input id="cName" type="text" maxlength="40" value="${esc(keepName == null ? data.class.name : keepName)}" required autocomplete="off"></label><button class="btn" type="submit">Save name</button></form></div>
     <div class="card"><h2>My classes</h2><div class="table-box"><table><tr><th>Class</th><th>Code</th><th class="n">Readers</th><th></th></tr>${data.classes.map(c => `<tr><td>${esc(c.name)}</td><td class="pin">${esc(c.code)}</td><td class="n">${c.students}</td>
       <td class="n"><div class="row" style="justify-content:flex-end;flex-wrap:nowrap">${c.id === data.class.id ? `<span class="pill approved">Open now</span>` : `<button class="btn small" data-act="openclass" data-id="${esc(c.id)}">Open</button>${c.students ? "" : `<button class="btn small danger" data-act="delclass" data-id="${esc(c.id)}">${confirmKey === "c:" + c.id ? "Tap again" : "Remove"}</button>`}`}</div></td></tr>`).join("")}</table></div></div>
+    ${data.admin ? `<div class="card"><h2>Teachers</h2>
+      <div class="fields"><div><span class="meta">School code for new teachers</span><div class="code">${esc(data.admin.school_code)}</div></div>
+      <div><span class="meta">Link for teachers</span><div class="break">${esc(location.href.split("#")[0])}</div><button class="btn small" data-act="copy" data-text="${esc(location.href.split("#")[0])}">Copy link</button></div></div>
+      <div class="table-box"><table><tr><th>Email</th><th class="n">Classes</th><th class="n">Readers</th><th></th></tr>${data.admin.teachers.map(t => `<tr><td class="break">${esc(t.email)}</td><td class="n">${t.classes}</td><td class="n">${t.students}</td>
+        <td class="n">${resetShown && resetShown.id === t.id ? `<span class="code" style="font-size:1.1rem">${esc(resetShown.code)}</span>` : `<button class="btn small" data-act="resetcode" data-id="${esc(t.id)}">Reset code</button>`}</td></tr>`).join("")}</table></div>
+      <p class="meta">If a teacher forgets their password, tap Reset code and give them the code. It works once.</p></div>` : ""}
     <div class="card"><div class="row" style="justify-content:space-between"><h2>My readers</h2><button class="btn small primary" data-act="print" ${data.students.length ? "" : "disabled"}>Print PIN cards</button></div><p class="note">Don't project this page. It shows every student's PIN.</p>
       ${rows ? `<div class="table-box"><table><tr><th>Reader</th><th>PIN</th><th class="n">Points</th><th class="n">Minutes</th><th class="n">Readings</th><th class="n">JFK Reads</th><th></th></tr>${rows}</table></div>` : `<p class="muted">No readers yet. Add your first reader above.</p>`}</div>`;
   $("printArea").innerHTML = data.students.map(s => `<div class="pin-card"><div class="pc-brand">Summit Readers</div><div class="pc-name">${esc(s.name)}</div>
@@ -206,6 +216,9 @@ document.addEventListener("click", async ev => {
   else if (a === "delstudent") { if (twoTap("s:" + id)) await act("teacher_student_delete", { p_id: id }); }
   else if (a === "newpin") { if (twoTap("p:" + id)) await act("teacher_student_new_pin", { p_id: id }); }
   else if (a === "print") window.print();
+  else if (a === "resetcode") {
+    try { const r = await rpc("teacher_issue_reset_code", { p_token: token, p_teacher: id }); resetShown = { id, code: r.code }; render(); } catch (e) { handleError(e); }
+  }
   else if (a === "openclass") { forgetOpenClass(); await act("teacher_class_switch", { p_id: id }); }
   else if (a === "delclass") { if (twoTap("c:" + id)) await act("teacher_class_delete", { p_id: id }); }
   else if (a === "copy") {
