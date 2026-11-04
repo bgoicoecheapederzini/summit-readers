@@ -42,7 +42,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 label { display: grid; gap: 4px; font-weight: 800; min-width: 0 }
 label.check { display: flex; gap: 10px; align-items: center; min-height: 44px }
 label.check input { width: 24px; height: 24px; flex: none; accent-color: var(--violet) }
-input[type=text], input[type=password], input[type=number], select, textarea { width: 100%; min-height: 48px; padding: 8px 12px; border: 2px solid #d9d4f3; border-radius: 14px; background: #fbfaff; color: var(--ink); font: 700 1.05rem var(--body) }
+input[type=text], input[type=email], input[type=password], input[type=number], select, textarea { width: 100%; min-height: 48px; padding: 8px 12px; border: 2px solid #d9d4f3; border-radius: 14px; background: #fbfaff; color: var(--ink); font: 700 1.05rem var(--body) }
 textarea { resize: vertical; min-height: 84px }
 .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px }
 
