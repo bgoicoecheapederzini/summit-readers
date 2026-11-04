@@ -14,7 +14,7 @@ body { margin: 0; background: var(--sky); color: var(--ink); font: 700 18px/1.45
 .wrap { max-width: 1120px; margin: 0 auto; padding-block: 12px 40px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   display: grid; gap: 14px }
-.wrap.narrow { max-width: 620px }
+.wrap.narrow { max-width: 780px }
 h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; font-weight: 800 }
 h1 { font-size: 2.1rem } h2 { font-size: 1.5rem } h3 { font-size: 1.25rem }
 p { margin: 0 }
@@ -45,7 +45,7 @@ textarea { resize: vertical; min-height: 84px }
 
 /* Map */
 .map-box { overflow-x: auto; border: 3px solid var(--ink); border-radius: 18px; background: var(--sky) }
-.map-box svg { display: block; width: 100%; min-width: 620px; max-height: 58svh }
+.map-box svg { display: block; width: 100%; min-width: 520px; max-height: 58svh }
 .legend { display: flex; flex-wrap: wrap; gap: 8px 16px }
 .legend > span { display: flex; align-items: center; gap: 6px }
 .token { flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--ink); color: #fff; font: 800 1.1rem var(--display) }

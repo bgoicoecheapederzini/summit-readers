@@ -207,6 +207,7 @@ function showActivity(error) {
   $("leave").addEventListener("click", () => { saveDraft(); painter = null; draft = null; loadHome(); });
   app.querySelectorAll("[data-proof]").forEach(b => b.addEventListener("click", () => {
     saveDraft(); draft.proof = b.dataset.proof; showActivity();
+    app.querySelector(`[data-proof="${draft.proof}"]`).scrollIntoView({ block: "start" });
   }));
   $("work").addEventListener("input", saveDraft);
   $("work").addEventListener("submit", submitWork);
