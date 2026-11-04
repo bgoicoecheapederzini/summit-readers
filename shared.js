@@ -1,11 +1,10 @@
 const API_URL = "https://xbqgnbdhgorrgvcbyzyo.supabase.co/rest/v1/rpc/";
 const API_KEY = "sb_publishable_Xw1bAL6qlys6ObFjMVLW7Q_uAtto4jH";
-const READ_SECONDS = 900;
 const STOPS = [
-  { p: 0, name: "Trailhead", x: 90, y: 470 }, { p: 25, name: "Pine Forest", x: 300, y: 425 },
-  { p: 50, name: "River Bridge", x: 535, y: 468 }, { p: 75, name: "Echo Cave", x: 800, y: 400 },
-  { p: 100, name: "Windy Ridge", x: 610, y: 305 }, { p: 125, name: "Cloud Camp", x: 370, y: 225 },
-  { p: 150, name: "Summit", x: 610, y: 88 }
+  { p: 0, name: "Trailhead", x: 90, y: 470 }, { p: 50, name: "Pine Forest", x: 300, y: 425 },
+  { p: 100, name: "River Bridge", x: 535, y: 468 }, { p: 150, name: "Echo Cave", x: 800, y: 400 },
+  { p: 200, name: "Windy Ridge", x: 610, y: 305 }, { p: 300, name: "Cloud Camp", x: 370, y: 225 },
+  { p: 400, name: "Summit", x: 610, y: 88 }
 ];
 const SVG_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
 const ICONS = {
@@ -33,7 +32,7 @@ const ACTIVITIES = {
   write: { name: "Write It", blurb: "Write three sentences.", color: "#e8710a", fields: [["text", "My writing", "This reading is about... The best part was... because... I wonder..."]] },
   achieve: { name: "Achieve3000", blurb: "Over 75% earns 3 extra points!", color: "#1f9d55", fields: [["learned", "I learned...", "Write one new thing you learned."]] }
 };
-const submissionPoints = w => 10 + (w.spot_passed ? 3 : 0) + (w.proof === "achieve" && w.score > 75 ? 3 : 0);
+const submissionPoints = w => w.minutes + 10 + (w.spot_passed ? 3 : 0) + (w.proof === "achieve" && w.score > 75 ? 3 : 0);
 const proofName = p => p === "teacher" ? "Added by your teacher" : (ACTIVITIES[p] || {}).name || "";
 const MESSAGES = {
   network: "We can't reach Summit Readers right now. Check the internet and try again. If it keeps happening, tell your teacher.",
@@ -47,16 +46,16 @@ const MESSAGES = {
   score: "Write your quiz score as a number from 0 to 100.",
   score_low: "Achieve3000 counts at 75% or higher. Try another article, or choose a different activity.",
   drawing: "Your drawing didn't save. Try again.",
-  too_soon: "Your 15 minutes aren't finished yet.",
-  no_reading: "Start a new reading first.",
+  minutes: "Write how many minutes you read, from 5 to 60.",
+  minutes_teacher: "Write the minutes as a number from 1 to 180.",
   not_found: "We can't find that work.",
   auth: "Please sign in again."
 };
 const RULES_HTML = `
   <div class="card"><h2>How to play</h2>
     <ol class="steps">
-      <li>Open <b>Add Reading</b> and start the timer.</li>
-      <li>Read anything you like for 15 minutes.</li>
+      <li>Read anything you like in your free time.</li>
+      <li>Open <b>Add Reading</b> and write what you read and for how many minutes.</li>
       <li>Choose one activity from the choice board and send it.</li>
       <li>When your teacher approves it, you earn points and move up the map.</li>
     </ol></div>
@@ -64,7 +63,8 @@ const RULES_HTML = `
     <div class="card"><h2>Points</h2>
       <div class="table-box"><table>
         <tr><th>What you did</th><th class="n">Points</th></tr>
-        <tr><td>Read for 15 minutes and finish one activity</td><td class="n">10</td></tr>
+        <tr><td>Each minute you read</td><td class="n">1</td></tr>
+        <tr><td>Each activity you finish</td><td class="n">10</td></tr>
         <tr><td>Score over 75% on an Achieve3000 quiz</td><td class="n">+3</td></tr>
         <tr><td>Pass a Spot Check</td><td class="n">+3</td></tr>
       </table></div>
@@ -73,6 +73,7 @@ const RULES_HTML = `
       <ul class="bullets">
         <li>Your teacher may ask you about any reading, at any time. Keep your book close.</li>
         <li>If you can't answer yet, you don't lose points. Read it again and try again.</li>
+        <li>Write your real minutes. Your teacher checks them.</li>
         <li>Choose a book that feels just right for you.</li>
       </ul></div>
   </div>`;

@@ -75,7 +75,7 @@ function render() {
       if (await act("teacher_student_add", { p_name: $("rName").value })) { $("rName").value = ""; $("rName").focus(); }
     });
   }
-  $("stats").innerHTML = `<span><b>${approved.length}</b> readings</span><span><b>${approved.filter(w => w.jfk).length}</b> for JFK Reads</span>`;
+  $("stats").innerHTML = `<span><b>${approved.reduce((n, w) => n + w.minutes, 0)}</b> minutes</span><span><b>${approved.length}</b> readings</span><span><b>${approved.filter(w => w.jfk).length}</b> for JFK Reads</span>`;
   $("tabs").innerHTML = TABS.map(([k, label, ic]) => `<button role="tab" aria-selected="${tab === k}" data-tab="${k}">${icon(ic)}<span>${label}</span>${k === "review" && pending ? `<span class="count">${pending}</span>` : ""}</button>`).join("");
   TABS.forEach(([k]) => { $("p-" + k).hidden = k !== tab; });
   renderReview(); renderCheck(); renderMap(); renderRoster();
@@ -85,6 +85,7 @@ function entry(w, actions) {
   const isOpen = openId === w.id;
   return `<div class="work"><div><b>${esc(studentName(w.student_id))}</b> · ${esc(w.title)}
       <div class="meta">${esc(proofName(w.proof))}${w.proof === "achieve" ? " " + w.score + "%" : ""} · ${subPoints(w)} points${w.spot_passed ? " · Spot Check passed" : ""}</div>
+      <label for="min-${esc(w.id)}" class="row" style="gap:8px;margin-top:4px">Minutes<input id="min-${esc(w.id)}" type="number" min="1" max="180" inputmode="numeric" data-minutes="${esc(w.id)}" value="${esc(w.minutes)}" style="width:96px"></label>
       <label class="check" for="jfk-${esc(w.id)}" style="min-height:36px"><input id="jfk-${esc(w.id)}" type="checkbox" data-jfk="${esc(w.id)}" ${w.jfk ? "checked" : ""}>Counts for JFK Reads</label></div>
     <div class="row">${w.proof === "teacher" ? "" : `<button class="btn small" data-act="open" data-id="${esc(w.id)}">${isOpen ? "Close" : "See work"}</button>`}${actions}</div>
     ${isOpen && openWork ? `<div style="flex:1 1 100%;display:grid;gap:10px">${workHtml(openWork)}</div>` : ""}</div>`;
@@ -95,24 +96,25 @@ function renderReview() {
   const by = s => data.submissions.filter(w => w.status === s);
   const sec = (title, list, empty, fn) => `<div class="card"><h2>${title}</h2>${list.length ? list.map(fn).join("") : `<p class="muted">${empty}</p>`}</div>`;
   const options = data.students.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("");
-  const keep = $("aStudent") ? { s: $("aStudent").value, t: $("aTitle").value, j: $("aJfk").checked, open: $("addBox").open } : null;
+  const keep = $("aStudent") ? { s: $("aStudent").value, t: $("aTitle").value, m: $("aMinutes").value, j: $("aJfk").checked, open: $("addBox").open } : null;
   $("p-review").innerHTML =
     sec("Waiting for you", by("pending"), "Nothing to review. Students' work lands here when they send it.", w => entry(w,
       `<button class="btn small primary" data-act="approve" data-id="${esc(w.id)}">Approve</button><button class="btn small" data-act="spot" data-id="${esc(w.id)}">Spot Check</button><button class="btn small" data-act="retry" data-id="${esc(w.id)}">Try again</button>${delBtn(w)}`)) +
     (by("retry").length ? sec("Reading it again", by("retry"), "", w => entry(w, `<button class="btn small" data-act="approve" data-id="${esc(w.id)}">Approve</button>${delBtn(w)}`)) : "") +
     sec("Recently approved", by("approved").slice(0, 15), "Approved readings appear here.", w => entry(w, `<button class="btn small" data-act="unapprove" data-id="${esc(w.id)}">Undo approval</button>`)) +
     `<details class="card" id="addBox"><summary>Add a reading by hand</summary>
-      <p class="meta">For a student who has no device at home. It's approved right away.</p>
+      <p class="meta">For a student who has no device at home. It's approved right away and earns the minutes plus 10 activity points.</p>
       <form id="addForm" style="display:grid;gap:10px"><div class="fields">
         <label for="aStudent">Reader<select id="aStudent" required><option value="">Choose a reader</option>${options}</select></label>
-        <label for="aTitle">Title<input id="aTitle" type="text" maxlength="120" required autocomplete="off"></label></div>
+        <label for="aTitle">Title<input id="aTitle" type="text" maxlength="120" required autocomplete="off"></label>
+        <label for="aMinutes">Minutes<input id="aMinutes" type="number" min="1" max="180" inputmode="numeric" required></label></div>
         <label class="check" for="aJfk"><input id="aJfk" type="checkbox">Counts for JFK Reads</label>
         <div class="row"><button class="btn primary" type="submit">Add reading</button></div></form></details>`;
-  if (keep) { $("aStudent").value = keep.s; $("aTitle").value = keep.t; $("aJfk").checked = keep.j; $("addBox").open = keep.open; }
+  if (keep) { $("aStudent").value = keep.s; $("aTitle").value = keep.t; $("aMinutes").value = keep.m; $("aJfk").checked = keep.j; $("addBox").open = keep.open; }
   $("addForm").addEventListener("submit", async ev => {
     ev.preventDefault();
-    const ok = await act("teacher_add_reading", { p_student: $("aStudent").value, p_title: $("aTitle").value, p_jfk: $("aJfk").checked });
-    if (ok) { $("aStudent").value = ""; $("aTitle").value = ""; $("aJfk").checked = false; toast("Reading added."); }
+    const ok = await act("teacher_add_reading", { p_student: $("aStudent").value, p_title: $("aTitle").value, p_minutes: Number($("aMinutes").value), p_jfk: $("aJfk").checked });
+    if (ok) { $("aStudent").value = ""; $("aTitle").value = ""; $("aMinutes").value = ""; $("aJfk").checked = false; toast("Reading added."); }
   });
 }
 
@@ -138,7 +140,7 @@ function renderMap() {
 
 function renderRoster() {
   const link = new URL("index.html", location.href).href;
-  const rows = data.students.map(s => `<tr><td>${esc(s.name)}</td><td class="pin">${esc(s.pin)}</td><td class="n">${s.points}</td><td class="n">${s.readings}</td><td class="n">${s.jfk}</td>
+  const rows = data.students.map(s => `<tr><td>${esc(s.name)}</td><td class="pin">${esc(s.pin)}</td><td class="n">${s.points}</td><td class="n">${s.minutes}</td><td class="n">${s.readings}</td><td class="n">${s.jfk}</td>
     <td class="n"><div class="row" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn small" data-act="newpin" data-id="${esc(s.id)}">${confirmKey === "p:" + s.id ? "Tap again" : "New PIN"}</button><button class="btn small danger" data-act="delstudent" data-id="${esc(s.id)}">${confirmKey === "s:" + s.id ? "Tap again" : "Remove"}</button></div></td></tr>`).join("");
   const keepName = $("cName") && document.activeElement === $("cName") ? $("cName").value : null;
   $("roster").innerHTML = `<div class="card"><h2>What students need</h2>
@@ -146,7 +148,7 @@ function renderRoster() {
       <div><span class="meta">Class code</span><div class="code">${esc(data.class.code)}</div></div></div>
       <form id="renameForm" class="row"><label for="cName" style="flex:1 1 220px">Class name<input id="cName" type="text" maxlength="40" value="${esc(keepName == null ? data.class.name : keepName)}" required autocomplete="off"></label><button class="btn" type="submit">Save name</button></form></div>
     <div class="card"><h2>My readers</h2><p class="note">Don't project this page. It shows every student's PIN.</p>
-      ${rows ? `<div class="table-box"><table><tr><th>Reader</th><th>PIN</th><th class="n">Points</th><th class="n">Readings</th><th class="n">JFK Reads</th><th></th></tr>${rows}</table></div>` : `<p class="muted">No readers yet. Add your first reader above.</p>`}</div>`;
+      ${rows ? `<div class="table-box"><table><tr><th>Reader</th><th>PIN</th><th class="n">Points</th><th class="n">Minutes</th><th class="n">Readings</th><th class="n">JFK Reads</th><th></th></tr>${rows}</table></div>` : `<p class="muted">No readers yet. Add your first reader above.</p>`}</div>`;
   $("renameForm").addEventListener("submit", async ev => {
     ev.preventDefault();
     if (await act("teacher_class_rename", { p_name: $("cName").value })) toast("Class name saved.");
@@ -185,6 +187,8 @@ document.addEventListener("click", async ev => {
 document.addEventListener("change", ev => {
   const j = ev.target.closest("input[data-jfk]");
   if (j) act("teacher_set_jfk", { p_id: j.dataset.jfk, p_jfk: j.checked });
+  const m = ev.target.closest("input[data-minutes]");
+  if (m) act("teacher_set_minutes", { p_id: m.dataset.minutes, p_minutes: Number(m.value) });
 });
 setInterval(() => {
   if (!token || !data || document.visibilityState !== "visible") return;
