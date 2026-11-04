@@ -132,6 +132,8 @@ th { border-top: 0; color: var(--muted); font-size: .9rem }
 td.n, th.n { text-align: right }
 
 /* Teacher */
+.class-bar { display: flex; align-items: center; gap: 10px; color: #fff }
+.class-bar select { flex: 1 1 auto; min-width: 0; max-width: 460px; background: #fff; border-color: transparent; font-weight: 800 }
 .stats { display: flex; flex-wrap: wrap; gap: 6px; font-variant-numeric: tabular-nums }
 .stats span { background: rgba(255,255,255,.2); color: #fff; border-radius: 14px; padding: 2px 12px; font-size: .95rem }
 .question { font: 600 1.7rem/1.25 var(--display); text-wrap: balance }

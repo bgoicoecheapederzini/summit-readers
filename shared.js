@@ -48,7 +48,10 @@ const MESSAGES = {
   drawing: "Your drawing didn't save. Try again.",
   minutes: "Write how many minutes you read, from 5 to 60.",
   minutes_teacher: "Write the minutes as a number from 1 to 180.",
-  not_found: "We can't find that work.",
+  not_found: "We can't find that.",
+  invalid: "Check what you typed and try again.",
+  class_open: "Open a different class first. Then you can remove this one.",
+  class_not_empty: "Remove the readers from this class first.",
   auth: "Please sign in again."
 };
 const RULES_HTML = `

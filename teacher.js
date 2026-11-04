@@ -42,6 +42,8 @@ function showLogin(mode, error) {
   });
 }
 
+function forgetOpenClass() { spot = null; openId = null; openWork = null; confirmKey = null; }
+
 function handleError(e) {
   if (e.message === "auth") { token = null; store.del("sr_teacher"); showLogin("login", MESSAGES.auth); return; }
   toast(friendly(e));
@@ -60,11 +62,13 @@ function render() {
   const approved = data.submissions.filter(w => w.status === "approved");
   if (!$("tabs")) {
     app.innerHTML = `<div class="top"><h1>Summit Readers</h1><div class="who"><div class="stats" id="stats"></div><button class="ghost" id="out">Log out</button></div></div>
+      <label for="classPick" class="class-bar"><span>Class</span><select id="classPick"></select></label>
       <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
       <div id="p-review" class="stack"></div>
       <div id="p-check" class="stack"></div>
       <div id="p-map" class="stack"></div>
-      <div id="p-class" class="stack"><div class="card"><h2>Add a reader</h2><form id="readerForm" class="row"><label for="rName" style="flex:1 1 220px">First name<input id="rName" type="text" maxlength="30" required autocomplete="off"></label><button class="btn primary" type="submit">Add reader</button></form><p class="meta">Use first names only. If two readers share a name, add an initial.</p></div><div id="roster" class="stack"></div></div>
+      <div id="p-class" class="stack"><div class="two"><div class="card"><h2>Add a reader</h2><form id="readerForm" class="row"><label for="rName" style="flex:1 1 200px">First name<input id="rName" type="text" maxlength="30" required autocomplete="off"></label><button class="btn primary" type="submit">Add reader</button></form><p class="meta">Use first names only. If two readers share a name, add an initial.</p></div>
+        <div class="card"><h2>Add a class</h2><form id="classForm" class="row"><label for="nName" style="flex:1 1 200px">Class name<input id="nName" type="text" maxlength="40" required autocomplete="off"></label><button class="btn primary" type="submit">Add class</button></form><p class="meta">Each class gets its own code and its own readers.</p></div></div><div id="roster" class="stack"></div></div>
       <div id="p-rules" class="stack">${RULES_HTML}</div>`;
     $("out").addEventListener("click", async () => {
       try { await rpc("teacher_logout", { p_token: token }); } catch (e) {}
@@ -74,7 +78,13 @@ function render() {
       ev.preventDefault();
       if (await act("teacher_student_add", { p_name: $("rName").value })) { $("rName").value = ""; $("rName").focus(); }
     });
+    $("classForm").addEventListener("submit", async ev => {
+      ev.preventDefault();
+      forgetOpenClass();
+      if (await act("teacher_class_add", { p_name: $("nName").value })) { $("nName").value = ""; toast("Class added. Now add its readers."); }
+    });
   }
+  $("classPick").innerHTML = data.classes.map(c => `<option value="${esc(c.id)}" ${c.id === data.class.id ? "selected" : ""}>${esc(c.name)}${c.pending ? ` (${c.pending} to review)` : ""}</option>`).join("");
   $("stats").innerHTML = `<span><b>${approved.reduce((n, w) => n + w.minutes, 0)}</b> minutes</span><span><b>${approved.length}</b> readings</span><span><b>${approved.filter(w => w.jfk).length}</b> for JFK Reads</span>`;
   $("tabs").innerHTML = TABS.map(([k, label, ic]) => `<button role="tab" aria-selected="${tab === k}" data-tab="${k}">${icon(ic)}<span>${label}</span>${k === "review" && pending ? `<span class="count">${pending}</span>` : ""}</button>`).join("");
   TABS.forEach(([k]) => { $("p-" + k).hidden = k !== tab; });
@@ -147,6 +157,8 @@ function renderRoster() {
       <div class="fields"><div><span class="meta">Link for Seesaw</span><div class="break">${esc(link)}</div><button class="btn small" data-act="copy" data-text="${esc(link)}">Copy link</button></div>
       <div><span class="meta">Class code</span><div class="code">${esc(data.class.code)}</div></div></div>
       <form id="renameForm" class="row"><label for="cName" style="flex:1 1 220px">Class name<input id="cName" type="text" maxlength="40" value="${esc(keepName == null ? data.class.name : keepName)}" required autocomplete="off"></label><button class="btn" type="submit">Save name</button></form></div>
+    <div class="card"><h2>My classes</h2><div class="table-box"><table><tr><th>Class</th><th>Code</th><th class="n">Readers</th><th></th></tr>${data.classes.map(c => `<tr><td>${esc(c.name)}</td><td class="pin">${esc(c.code)}</td><td class="n">${c.students}</td>
+      <td class="n"><div class="row" style="justify-content:flex-end;flex-wrap:nowrap">${c.id === data.class.id ? `<span class="pill approved">Open now</span>` : `<button class="btn small" data-act="openclass" data-id="${esc(c.id)}">Open</button>${c.students ? "" : `<button class="btn small danger" data-act="delclass" data-id="${esc(c.id)}">${confirmKey === "c:" + c.id ? "Tap again" : "Remove"}</button>`}`}</div></td></tr>`).join("")}</table></div></div>
     <div class="card"><h2>My readers</h2><p class="note">Don't project this page. It shows every student's PIN.</p>
       ${rows ? `<div class="table-box"><table><tr><th>Reader</th><th>PIN</th><th class="n">Points</th><th class="n">Minutes</th><th class="n">Readings</th><th class="n">JFK Reads</th><th></th></tr>${rows}</table></div>` : `<p class="muted">No readers yet. Add your first reader above.</p>`}</div>`;
   $("renameForm").addEventListener("submit", async ev => {
@@ -180,11 +192,19 @@ document.addEventListener("click", async ev => {
   else if (a === "del") { if (twoTap("e:" + id)) await act("teacher_delete_submission", { p_id: id }); }
   else if (a === "delstudent") { if (twoTap("s:" + id)) await act("teacher_student_delete", { p_id: id }); }
   else if (a === "newpin") { if (twoTap("p:" + id)) await act("teacher_student_new_pin", { p_id: id }); }
+  else if (a === "openclass") { forgetOpenClass(); await act("teacher_class_switch", { p_id: id }); }
+  else if (a === "delclass") { if (twoTap("c:" + id)) await act("teacher_class_delete", { p_id: id }); }
   else if (a === "copy") {
     try { await navigator.clipboard.writeText(b.dataset.text); toast("Link copied."); } catch (e) { toast("Select the link and copy it."); }
   }
 });
-document.addEventListener("change", ev => {
+document.addEventListener("change", async ev => {
+  if (ev.target.id === "classPick") {
+    forgetOpenClass();
+    $("aStudent").value = "";
+    if (await act("teacher_class_switch", { p_id: ev.target.value })) ev.target.blur();
+    return;
+  }
   const j = ev.target.closest("input[data-jfk]");
   if (j) act("teacher_set_jfk", { p_id: j.dataset.jfk, p_jfk: j.checked });
   const m = ev.target.closest("input[data-minutes]");
