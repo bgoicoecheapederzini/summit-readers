@@ -31,8 +31,9 @@ const ACTIVITIES = {
   words: { name: "New Words", blurb: "Find two new words.", color: "#8b4ae8", fields: [["w1", "New word 1", "Copy it from your reading"], ["m1", "It means...", "Use your own words"], ["w2", "New word 2", "Copy it from your reading"], ["m2", "It means...", "Use your own words"]] },
   draw: { name: "Draw It", blurb: "Draw your favorite part.", color: "#ef4d8c", fields: [["caption", "This picture shows...", "Write one sentence."]] },
   write: { name: "Write It", blurb: "Write three sentences.", color: "#e8710a", fields: [["text", "My writing", "This reading is about... The best part was... because... I wonder..."]] },
-  achieve: { name: "Achieve3000", blurb: "Share your quiz score.", color: "#1f9d55", fields: [["learned", "I learned...", "Write one new thing you learned."]] }
+  achieve: { name: "Achieve3000", blurb: "Over 75% earns 3 extra points!", color: "#1f9d55", fields: [["learned", "I learned...", "Write one new thing you learned."]] }
 };
+const submissionPoints = w => 10 + (w.spot_passed ? 3 : 0) + (w.proof === "achieve" && w.score > 75 ? 3 : 0);
 const proofName = p => p === "teacher" ? "Added by your teacher" : (ACTIVITIES[p] || {}).name || "";
 const MESSAGES = {
   network: "We can't reach Summit Readers right now. Check the internet and try again. If it keeps happening, tell your teacher.",
@@ -64,9 +65,10 @@ const RULES_HTML = `
       <div class="table-box"><table>
         <tr><th>What you did</th><th class="n">Points</th></tr>
         <tr><td>Read for 15 minutes and finish one activity</td><td class="n">10</td></tr>
+        <tr><td>Score over 75% on an Achieve3000 quiz</td><td class="n">+3</td></tr>
         <tr><td>Pass a Spot Check</td><td class="n">+3</td></tr>
       </table></div>
-      <p class="meta">Every activity earns the same points. Choose the one you like best.</p></div>
+      <p class="meta">Achieve3000 counts at 75% or higher. Choose the activity you like best.</p></div>
     <div class="card"><h2>Fair play</h2>
       <ul class="bullets">
         <li>Your teacher may ask you about any reading, at any time. Keep your book close.</li>

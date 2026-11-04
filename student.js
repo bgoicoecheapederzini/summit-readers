@@ -229,7 +229,7 @@ function viewEditor() {
       <div class="row" style="justify-content:space-between"><h2>${a.name}</h2><button type="button" class="btn small" id="change">Change activity</button></div>
       <label for="wTitle">What did you read?<input id="wTitle" type="text" maxlength="120" autocomplete="off" value="${esc(draft.title)}"></label>
       ${draft.proof === "draw" ? `<div class="draw-wrap"><div class="draw-tools" id="tools"></div><canvas class="paper" id="paper" width="1000" height="700" aria-label="Drawing space"></canvas></div>` : ""}
-      ${draft.proof === "achieve" ? `<label class="box" style="--c:${a.color}" for="f-score"><span>My quiz score</span><small>75% or higher counts.</small><input id="f-score" type="number" min="0" max="100" inputmode="numeric" value="${esc(draft.score)}"></label>` : ""}
+      ${draft.proof === "achieve" ? `<label class="box" style="--c:${a.color}" for="f-score"><span>My quiz score</span><small>75% or higher counts. Over 75% earns 3 extra points.</small><input id="f-score" type="number" min="0" max="100" inputmode="numeric" value="${esc(draft.score)}"></label>` : ""}
       <div class="boxes">${a.fields.map(field).join("")}</div>
       ${draft.proof === "write" ? `<p class="meta" id="wc" aria-live="polite"></p>` : ""}
       <label class="check" for="wJfk"><input id="wJfk" type="checkbox" ${draft.jfk ? "checked" : ""}>This is for JFK Reads</label>
@@ -329,8 +329,7 @@ function viewPoints() {
   }
   const i = stopIndex(home.points), now = STOPS[i], next = STOPS[i + 1];
   const pct = next ? Math.round((home.points - now.p) / (next.p - now.p) * 100) : 100;
-  const pts = w => 10 + (w.spot_passed ? 3 : 0);
-  const pill = w => w.status === "approved" ? `<span class="pill approved">+${pts(w)} points</span>` : w.status === "retry" ? `<span class="pill retry">Read it again</span>` : `<span class="pill pending">Waiting for your teacher</span>`;
+  const pill = w => w.status === "approved" ? `<span class="pill approved">+${submissionPoints(w)} points</span>` : w.status === "retry" ? `<span class="pill retry">Read it again</span>` : `<span class="pill pending">Waiting for your teacher</span>`;
   $("view").innerHTML = `<div class="card"><div class="score">
       <div><b>${home.points}</b><small>points</small></div>
       <div><b>★ ${home.stars}</b><small>readings</small></div>

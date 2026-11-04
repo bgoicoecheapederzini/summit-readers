@@ -13,7 +13,7 @@ const TABS = [["review", "Review", "review"], ["check", "Spot Check", "spot"], [
 let token = store.get("sr_teacher"), data = null, tab = "review", spot = null, confirmKey = null, openId = null, openWork = null;
 
 const studentName = id => (data.students.find(s => s.id === id) || {}).name || "Reader";
-const subPoints = w => 10 + (w.spot_passed ? 3 : 0);
+const subPoints = submissionPoints;
 
 function showLogin(mode, error) {
   const setup = mode === "setup";
